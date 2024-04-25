@@ -2,15 +2,16 @@ import cv2
 import os
 
 from anytext_pipeline import AnyTextPipeline
-from utils import save_images
+from util import save_images
 
 seed = 66273235
+# seed_everything(seed)
 
 pipe = AnyTextPipeline(
-    ckpt_path="model/anytext/anytext_v1.1_fp16.ckpt",
+    ckpt_path="models/anytext_models/anytext_v1.1.ckpt",
     font_path="font/SourceHanSansSC-Medium.otf",
-    use_fp16=False,
-    device="mps",
+    use_fp16=True,
+    device="cuda",
 )
 
 img_save_folder = "SaveImages"
@@ -25,8 +26,9 @@ masked_image = cv2.imread(
 rgb_image = cv2.resize(rgb_image, (512, 512))
 masked_image = cv2.resize(masked_image, (512, 512))
 
+# results: list of rgb ndarray
 results, rtn_code, rtn_warning = pipe(
-    prompt='"爆炸"',
+    prompt='\"升级\"',
     negative_prompt="low-res, bad anatomy, extra digit, fewer digits, cropped, worst quality, low quality, watermark, unreadable text, messy words, distorted text, disorganized writing, advertising picture",
     image=rgb_image,
     masked_image=masked_image,

@@ -1,13 +1,7 @@
-"""
-AnyText: Multilingual Visual Text Generation And Editing
-Paper: https://arxiv.org/abs/2311.03054
-Code: https://github.com/tyxsspa/AnyText
-Copyright (c) Alibaba, Inc. and its affiliates.
-"""
 import os
 from pathlib import Path
+import random
 
-from iopaint.model.utils import set_seed
 from safetensors.torch import load_file
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -19,7 +13,7 @@ import einops
 from PIL import ImageFont
 from cldm.model import create_model, load_state_dict
 from cldm.ddim_hacked import DDIMSampler
-from utils import (
+from util import (
     check_channels,
     draw_glyph,
     draw_glyph2,
@@ -33,6 +27,15 @@ max_chars = 20
 ANYTEXT_CFG = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "anytext_sd15.yaml"
 )
+
+# os.environ["U2NET_HOME"] = str("models")
+# os.environ["XDG_CACHE_HOME"] = str("models")
+
+def set_seed(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 
 def check_limits(tensor):
@@ -56,7 +59,7 @@ class AnyTextPipeline:
         self.font = ImageFont.truetype(font_path, size=60)
         self.model = create_model(
             self.cfg_path,
-            device=self.device,
+            # device=self.device,
             use_fp16=self.use_fp16,
         )
         if self.use_fp16:

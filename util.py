@@ -3,15 +3,13 @@ import datetime
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
-import random
-import torch
+import io
+from fastapi import HTTPException
+import base64
+import requests
 
-def set_seed(seed):
-
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+def gen_random_seed():
+    return np.random.randint(0, 99999999)
 
 def save_images(img_list, folder):
     if not os.path.exists(folder):
@@ -157,3 +155,45 @@ def draw_glyph2(
     img.paste(rotated_layer, (x_offset, y_offset), rotated_layer)
     img = np.expand_dims(np.array(img.convert("1")), axis=2).astype(np.float64)
     return img
+
+
+def process_base64_image(base64_data: str) -> np.ndarray:
+    try:
+        # 移除Base64字符串的URL前缀（如果存在）
+        if base64_data.startswith('data:image'):
+            base64_data = base64_data.split(",")[1]
+
+        # 解码Base64编码的图像
+        image_data = base64.b64decode(base64_data)
+
+        # 使用BytesIO，把二进制数据转换成文件类对象
+        image_file = io.BytesIO(image_data)
+
+        # 通过Pillow的Image.open()读取图片文件
+        image = Image.open(image_file)
+
+        # 利用Numpy把Pillow的Image转换为np.ndarray
+        image_np = np.array(image)
+        return image_np
+    except Exception as e:
+        print(f'process_base64_image error: {e}')
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+def process_image_url(image_url: str) -> np.ndarray:
+    try:
+        print(f'process_image_url: {image_url}')
+        # 下载图片数据
+        response = requests.get(str(image_url))
+        response.raise_for_status()
+        # 使用BytesIO，把二进制数据转换成文件类对象
+        image_file = io.BytesIO(response.content)
+
+        # 通过Pillow的Image.open()读取图片文件
+        image = Image.open(image_file)
+
+        # 利用Numpy把Pillow的Image转换为np.ndarray
+        image_np = np.array(image)
+        return image_np
+    except Exception as e:
+        print(f'process_image_url error: {e}')
+        raise HTTPException(status_code=400, detail=str(e)) from e
